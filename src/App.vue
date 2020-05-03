@@ -1,12 +1,91 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <img alt="Vue logo" src="./assets/logo.png" />
+    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import HelloWorld from './components/HelloWorld.vue'
+import * as THREE from 'three'
+// @ts-ignore
+import starTexture from './assets/star.png'
+
+let scene: THREE.Scene,
+  camera: THREE.PerspectiveCamera,
+  renderer: THREE.WebGLRenderer,
+  starGeo: THREE.Geometry,
+  stars: THREE.Points
+
+function init() {
+  scene = new THREE.Scene()
+
+  camera = new THREE.PerspectiveCamera(
+    60,
+    window.innerWidth / window.innerHeight,
+    1,
+    1000
+  )
+  camera.position.z = 1
+  camera.rotation.x = Math.PI / 2
+
+  renderer = new THREE.WebGLRenderer()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+  document.body.appendChild(renderer.domElement)
+
+  starGeo = new THREE.Geometry()
+  for (let i = 0; i < 6000; i++) {
+    let star = new THREE.Vector3(
+      Math.random() * 600 - 300,
+      Math.random() * 600 - 300,
+      Math.random() * 600 - 300
+    )
+    // @ts-ignore
+    star.velocity = 0
+    // @ts-ignore
+    star.acceleration = 0.02
+    starGeo.vertices.push(star)
+  }
+
+  let sprite = new THREE.TextureLoader().load(starTexture)
+  let starMaterial = new THREE.PointsMaterial({
+    color: 0xaaaaaa,
+    size: 0.7,
+    map: sprite
+  })
+
+  stars = new THREE.Points(starGeo, starMaterial)
+  scene.add(stars)
+
+  window.addEventListener('resize', onWindowResize, false)
+
+  animate()
+}
+function onWindowResize() {
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize(window.innerWidth, window.innerHeight)
+}
+function animate() {
+  starGeo.vertices.forEach(p => {
+    // @ts-ignore
+    p.velocity += p.acceleration
+    // @ts-ignore
+    p.y -= p.velocity
+
+    if (p.y < -200) {
+      p.y = 200
+      // @ts-ignore
+      p.velocity = 0
+    }
+  })
+  starGeo.verticesNeedUpdate = true
+  stars.rotation.y += 0.002
+
+  renderer.render(scene, camera)
+  requestAnimationFrame(animate)
+}
+init()
 
 export default {
   name: 'App',
@@ -17,12 +96,30 @@ export default {
 </script>
 
 <style>
+body {
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  background-color: black;
+  overflow: hidden;
+}
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  color: white;
+  margin-top: 30px;
+  background: transparent;
+
+  position: absolute;
+
+  width: inherit;
+  height: inherit;
+}
+
+img {
+  width: 100px;
 }
 </style>
